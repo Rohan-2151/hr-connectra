@@ -11,13 +11,16 @@ import {
   Building2,
   Settings,
   Banknote,
-  Wallet
+  Wallet,
+  Bell
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
+import { NotificationPanel } from "@/components/dialogs/notification-panel";
+import { MOCK_NOTIFICATIONS } from "@/lib/mock-data";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -27,6 +30,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, logout } = useAuth();
   const [location] = useLocation();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+
+  // Filter notifications for current user
+  const userNotifications = MOCK_NOTIFICATIONS.filter(n => n.userId === user?.id || (user?.role === 'admin' && n.type !== 'advance_approved'));
+  const unreadCount = userNotifications.filter(n => !n.read).length;
 
   const navItems = user?.role === "admin" 
     ? [
@@ -59,7 +67,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className="flex-1 px-4">
         <nav className="grid gap-2">
           {navItems.map((item) => {
-            // Check if active. For admin employees, we might have query params, so we check startsWith for exact path match
             const isActive = location === item.href || (item.href !== '/admin' && location.startsWith(item.href));
             
             return (
@@ -109,7 +116,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen bg-background md:grid md:grid-cols-[240px_1fr]">
-      {/* Desktop Sidebar - Added sticky top to ensure it stays visible and doesn't overflow strangely */}
+      {/* Desktop Sidebar */}
       <aside className="hidden border-r bg-sidebar md:block sticky top-0 h-screen overflow-y-auto z-30">
         <SidebarContent />
       </aside>
@@ -124,25 +131,64 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <span>Nexus</span>
           </div>
           
-          <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-[280px]">
-              <SidebarContent />
-            </SheetContent>
-          </Sheet>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => setIsNotificationOpen(true)}
+              className="relative"
+            >
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
+              )}
+            </Button>
+
+            <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-[280px]">
+                <SidebarContent />
+              </SheetContent>
+            </Sheet>
+          </div>
         </header>
 
-        {/* Main Content - Added relative z-0 to ensure it doesn't overlap sidebar */}
+        {/* Main Content */}
         <main className="flex-1 overflow-y-auto p-4 md:p-8 relative z-0">
           <div className="mx-auto max-w-6xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Desktop Notification Button */}
+            {user?.role === 'admin' && (
+              <div className="absolute top-8 right-8 md:flex hidden">
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => setIsNotificationOpen(true)}
+                  className="relative"
+                >
+                  <Bell className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-semibold">
+                      {unreadCount}
+                    </span>
+                  )}
+                </Button>
+              </div>
+            )}
             {children}
           </div>
         </main>
       </div>
+
+      {/* Notification Panel */}
+      <NotificationPanel 
+        open={isNotificationOpen}
+        onOpenChange={setIsNotificationOpen}
+        notifications={userNotifications}
+      />
     </div>
   );
 }

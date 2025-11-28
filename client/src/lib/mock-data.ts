@@ -12,9 +12,11 @@ export interface Employee {
   joiningDate: string;
   status: "active" | "inactive";
   avatar: string;
-  baseSalary: number; // Monthly Base Salary
-  salaryFormula?: string; // e.g., "Standard", "Hourly", "Contract"
-  otFormula?: string; // e.g., "1.5x", "2x", "Fixed Rate"
+  baseSalary: number;
+  salaryFormula?: string;
+  otFormula?: string;
+  password?: string;
+  permissions?: "read_only" | "read_write";
 }
 
 export interface AttendanceRecord {
@@ -28,7 +30,7 @@ export interface AttendanceRecord {
   location: { lat: number; lng: number };
   isEdited?: boolean;
   adminRemark?: string;
-  otHours?: number; // Added for explicit OT tracking
+  otHours?: number;
 }
 
 export interface AdvanceRecord {
@@ -42,7 +44,7 @@ export interface AdvanceRecord {
 
 export interface PayrollRecord {
   employeeId: string;
-  month: string; // YYYY-MM
+  month: string;
   presentDays: number;
   absentDays: number;
   weekOffs: number;
@@ -63,13 +65,24 @@ export interface CompanyRules {
   otStartAfter: number;
   otRateMultiplier: number;
   lateGracePeriodMinutes: number;
-  // New Fields
-  weekOffs: number[]; // 0=Sun, 1=Mon, etc.
+  weekOffs: number[];
   isWeekOffPaid: boolean;
   isHolidayPaid: boolean;
   officeLat: number;
   officeLng: number;
-  geofenceRadius: number; // meters
+  geofenceRadius: number;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: "attendance_edited" | "employee_modified" | "admin_added" | "advance_approved" | "profile_updated";
+  title: string;
+  message: string;
+  actionUser: string;
+  timestamp: string;
+  read: boolean;
+  relatedId?: string;
 }
 
 export const DEFAULT_RULES: CompanyRules = {
@@ -80,7 +93,7 @@ export const DEFAULT_RULES: CompanyRules = {
   otStartAfter: 9,
   otRateMultiplier: 1.5,
   lateGracePeriodMinutes: 15,
-  weekOffs: [0, 6], // Sat, Sun
+  weekOffs: [0, 6],
   isWeekOffPaid: true,
   isHolidayPaid: true,
   officeLat: 37.7749,
@@ -105,7 +118,9 @@ export const MOCK_EMPLOYEES: Employee[] = [
     avatar: "https://i.pravatar.cc/150?u=admin",
     baseSalary: 80000,
     salaryFormula: "Standard (Monthly / 30)",
-    otFormula: "1.5x Hourly Rate"
+    otFormula: "1.5x Hourly Rate",
+    password: "password123",
+    permissions: "read_write"
   },
   {
     id: "EMP002",
@@ -123,7 +138,8 @@ export const MOCK_EMPLOYEES: Employee[] = [
     avatar: "https://i.pravatar.cc/150?u=john",
     baseSalary: 50000,
     salaryFormula: "Standard (Monthly / 30)",
-    otFormula: "1.5x Hourly Rate"
+    otFormula: "1.5x Hourly Rate",
+    password: "password123"
   },
   {
     id: "EMP003",
@@ -141,11 +157,31 @@ export const MOCK_EMPLOYEES: Employee[] = [
     avatar: "https://i.pravatar.cc/150?u=jane",
     baseSalary: 60000,
     salaryFormula: "Standard (Monthly / 30)",
-    otFormula: "2.0x Hourly Rate"
+    otFormula: "2.0x Hourly Rate",
+    password: "password123"
+  },
+  {
+    id: "EMP004",
+    name: "Sarah Manager",
+    email: "sarah@company.com",
+    role: "admin",
+    mobile: "9876543213",
+    aadhar: "5555-6666-7777",
+    pan: "LMNOP1234I",
+    bankAccount: "5555666677",
+    ifsc: "AXIS0001234",
+    address: "321 Manager Ave, Tech City",
+    joiningDate: "2023-03-15",
+    status: "active",
+    avatar: "https://i.pravatar.cc/150?u=sarah",
+    baseSalary: 85000,
+    salaryFormula: "Standard (Monthly / 30)",
+    otFormula: "1.5x Hourly Rate",
+    password: "password123",
+    permissions: "read_only"
   }
 ];
 
-// We can use DEFAULT_RULES.officeLat/Lng instead of standalone
 export const OFFICE_LOCATION = {
   lat: DEFAULT_RULES.officeLat,
   lng: DEFAULT_RULES.officeLng,
@@ -217,5 +253,50 @@ export const MOCK_ADVANCES: AdvanceRecord[] = [
     amount: 5000,
     remark: "Medical Emergency",
     type: "salary_advance"
+  }
+];
+
+export const MOCK_NOTIFICATIONS: Notification[] = [
+  {
+    id: "NOT001",
+    userId: "EMP002",
+    type: "attendance_edited",
+    title: "Attendance Updated",
+    message: "Your attendance for Nov 15, 2025 has been modified by Admin User",
+    actionUser: "Admin User",
+    timestamp: new Date(Date.now() - 3600000).toISOString(),
+    read: false
+  },
+  {
+    id: "NOT002",
+    userId: "EMP001",
+    type: "employee_modified",
+    title: "Employee Profile Changed",
+    message: "John Doe's salary has been updated by Admin User",
+    actionUser: "Admin User",
+    timestamp: new Date(Date.now() - 7200000).toISOString(),
+    read: false,
+    relatedId: "EMP002"
+  },
+  {
+    id: "NOT003",
+    userId: "EMP003",
+    type: "advance_approved",
+    title: "Advance Approved",
+    message: "Your salary advance of ₹5,000 has been approved",
+    actionUser: "Admin User",
+    timestamp: new Date(Date.now() - 86400000).toISOString(),
+    read: true
+  },
+  {
+    id: "NOT004",
+    userId: "EMP001",
+    type: "admin_added",
+    title: "New Admin Added",
+    message: "Sarah Manager has been added as Admin with Read-Only permissions",
+    actionUser: "Admin User",
+    timestamp: new Date(Date.now() - 172800000).toISOString(),
+    read: true,
+    relatedId: "EMP004"
   }
 ];

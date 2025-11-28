@@ -6,12 +6,35 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { ChangePasswordDialog } from "@/components/dialogs/change-password-dialog";
-import { KeyRound } from "lucide-react";
+import { KeyRound, Upload, CheckCircle } from "lucide-react";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function EmployeeProfile() {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const [profileImage, setProfileImage] = useState(user?.avatar);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
 
   if (!user) return null;
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // In a real app, this would upload to server
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setProfileImage(e.target?.result as string);
+        setUploadSuccess(true);
+        toast({
+          title: "Profile Picture Updated",
+          description: "Your profile picture has been successfully uploaded.",
+        });
+        setTimeout(() => setUploadSuccess(false), 3000);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -26,14 +49,36 @@ export default function EmployeeProfile() {
         <Card className="h-fit">
           <CardHeader>
             <div className="flex flex-col items-center gap-4">
-              <Avatar className="h-32 w-32">
-                <AvatarImage src={user.avatar} />
-                <AvatarFallback className="text-4xl">{user.name.charAt(0)}</AvatarFallback>
-              </Avatar>
+              <div className="relative">
+                <Avatar className="h-32 w-32">
+                  <AvatarImage src={profileImage} />
+                  <AvatarFallback className="text-4xl">{user.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+                {uploadSuccess && (
+                  <div className="absolute inset-0 bg-green-500/20 rounded-full flex items-center justify-center">
+                    <CheckCircle className="h-8 w-8 text-green-600" />
+                  </div>
+                )}
+              </div>
               <div className="text-center">
                 <CardTitle>{user.name}</CardTitle>
                 <CardDescription className="mt-1">{user.role.toUpperCase()}</CardDescription>
               </div>
+              <label htmlFor="profile-upload">
+                <Button asChild variant="outline" className="w-full cursor-pointer">
+                  <span>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Change Picture
+                  </span>
+                </Button>
+              </label>
+              <input
+                id="profile-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
