@@ -20,15 +20,22 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MOCK_EMPLOYEES, Employee } from "@/lib/mock-data";
 import { ChangePasswordDialog } from "@/components/dialogs/change-password-dialog";
+import { EditEmployeeDialog } from "@/components/dialogs/edit-employee-dialog";
 import { useState } from "react";
 
 export function EmployeeTable({ filter }: { filter?: string | null }) {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const handlePasswordChange = (employee: Employee) => {
     setSelectedEmployee(employee);
     setIsPasswordDialogOpen(true);
+  };
+
+  const handleEditEmployee = (employee: Employee) => {
+    setSelectedEmployee(employee);
+    setIsEditDialogOpen(true);
   };
 
   // Simple mock filter logic
@@ -49,6 +56,12 @@ export function EmployeeTable({ filter }: { filter?: string | null }) {
         open={isPasswordDialogOpen} 
         onOpenChange={setIsPasswordDialogOpen}
         employeeName={selectedEmployee?.name}
+      />
+
+      <EditEmployeeDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        employee={selectedEmployee}
       />
 
       <Table>
@@ -110,10 +123,10 @@ export function EmployeeTable({ filter }: { filter?: string | null }) {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleEditEmployee(employee)}>
                         <Eye className="mr-2 h-4 w-4" /> View Details
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleEditEmployee(employee)}>
                         <Edit className="mr-2 h-4 w-4" /> Edit Employee
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handlePasswordChange(employee)}>

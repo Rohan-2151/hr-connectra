@@ -13,6 +13,8 @@ export interface Employee {
   status: "active" | "inactive";
   avatar: string;
   baseSalary: number; // Monthly Base Salary
+  salaryFormula?: string; // e.g., "Standard", "Hourly", "Contract"
+  otFormula?: string; // e.g., "1.5x", "2x", "Fixed Rate"
 }
 
 export interface AttendanceRecord {
@@ -76,7 +78,9 @@ export const MOCK_EMPLOYEES: Employee[] = [
     joiningDate: "2023-01-01",
     status: "active",
     avatar: "https://i.pravatar.cc/150?u=admin",
-    baseSalary: 80000
+    baseSalary: 80000,
+    salaryFormula: "Standard (Monthly / 30)",
+    otFormula: "1.5x Hourly Rate"
   },
   {
     id: "EMP002",
@@ -92,7 +96,9 @@ export const MOCK_EMPLOYEES: Employee[] = [
     joiningDate: "2023-06-15",
     status: "active",
     avatar: "https://i.pravatar.cc/150?u=john",
-    baseSalary: 50000
+    baseSalary: 50000,
+    salaryFormula: "Standard (Monthly / 30)",
+    otFormula: "1.5x Hourly Rate"
   },
   {
     id: "EMP003",
@@ -108,7 +114,9 @@ export const MOCK_EMPLOYEES: Employee[] = [
     joiningDate: "2024-02-01",
     status: "active",
     avatar: "https://i.pravatar.cc/150?u=jane",
-    baseSalary: 60000
+    baseSalary: 60000,
+    salaryFormula: "Standard (Monthly / 30)",
+    otFormula: "2.0x Hourly Rate"
   }
 ];
 
