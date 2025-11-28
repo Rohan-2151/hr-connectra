@@ -12,6 +12,7 @@ export interface Employee {
   joiningDate: string;
   status: "active" | "inactive";
   avatar: string;
+  baseSalary: number; // Monthly Base Salary
 }
 
 export interface AttendanceRecord {
@@ -21,9 +22,44 @@ export interface AttendanceRecord {
   punchIn: string | null;
   punchOut: string | null;
   totalHours: number;
-  status: "present" | "absent" | "half-day";
+  status: "present" | "absent" | "half-day" | "week-off" | "holiday";
   location: { lat: number; lng: number };
 }
+
+export interface PayrollRecord {
+  employeeId: string;
+  month: string; // YYYY-MM
+  presentDays: number;
+  absentDays: number;
+  weekOffs: number;
+  holidays: number;
+  totalWorkingHours: number;
+  otHours: number;
+  otEarnings: number;
+  deductions: number;
+  netSalary: number;
+  status: "processed" | "pending";
+}
+
+export interface CompanyRules {
+  shiftStart: string;
+  shiftEnd: string;
+  fullDayHours: number;
+  halfDayHours: number;
+  otStartAfter: number; // Hours after which OT counts
+  otRateMultiplier: number; // e.g., 1.5x of hourly rate
+  lateGracePeriodMinutes: number;
+}
+
+export const DEFAULT_RULES: CompanyRules = {
+  shiftStart: "09:00",
+  shiftEnd: "18:00",
+  fullDayHours: 9,
+  halfDayHours: 4.5,
+  otStartAfter: 9,
+  otRateMultiplier: 1.5,
+  lateGracePeriodMinutes: 15
+};
 
 export const MOCK_EMPLOYEES: Employee[] = [
   {
@@ -39,7 +75,8 @@ export const MOCK_EMPLOYEES: Employee[] = [
     address: "123 Admin St, Tech City",
     joiningDate: "2023-01-01",
     status: "active",
-    avatar: "https://i.pravatar.cc/150?u=admin"
+    avatar: "https://i.pravatar.cc/150?u=admin",
+    baseSalary: 80000
   },
   {
     id: "EMP002",
@@ -54,7 +91,8 @@ export const MOCK_EMPLOYEES: Employee[] = [
     address: "456 Employee Lane, Suburbia",
     joiningDate: "2023-06-15",
     status: "active",
-    avatar: "https://i.pravatar.cc/150?u=john"
+    avatar: "https://i.pravatar.cc/150?u=john",
+    baseSalary: 50000
   },
   {
     id: "EMP003",
@@ -69,7 +107,8 @@ export const MOCK_EMPLOYEES: Employee[] = [
     address: "789 Developer Rd, Codington",
     joiningDate: "2024-02-01",
     status: "active",
-    avatar: "https://i.pravatar.cc/150?u=jane"
+    avatar: "https://i.pravatar.cc/150?u=jane",
+    baseSalary: 60000
   }
 ];
 
@@ -78,6 +117,37 @@ export const OFFICE_LOCATION = {
   lng: -122.4194,
   radius: 100 // meters
 };
+
+export const MOCK_PAYROLL: PayrollRecord[] = [
+  {
+    employeeId: "EMP002",
+    month: "2023-10",
+    presentDays: 22,
+    absentDays: 1,
+    weekOffs: 8,
+    holidays: 0,
+    totalWorkingHours: 180,
+    otHours: 5,
+    otEarnings: 2000,
+    deductions: 500,
+    netSalary: 51500,
+    status: "processed"
+  },
+  {
+    employeeId: "EMP003",
+    month: "2023-10",
+    presentDays: 20,
+    absentDays: 3,
+    weekOffs: 8,
+    holidays: 0,
+    totalWorkingHours: 160,
+    otHours: 0,
+    otEarnings: 0,
+    deductions: 1500,
+    netSalary: 58500,
+    status: "processed"
+  }
+];
 
 export const MOCK_ATTENDANCE: AttendanceRecord[] = [
   {
