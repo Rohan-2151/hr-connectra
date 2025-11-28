@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { KeyRound, Plus, Users } from "lucide-react";
+import { KeyRound, Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -20,11 +20,21 @@ import {
 } from "@/components/ui/dialog";
 import { ChangePasswordDialog } from "@/components/dialogs/change-password-dialog";
 
+interface Admin {
+  id: string;
+  name: string;
+  email: string;
+  mobile: string;
+  permissions: "read_only" | "read_write";
+  joiningDate: string;
+}
+
 export default function AdminProfile() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isEditMode, setIsEditMode] = useState(false);
   const [isAddAdminOpen, setIsAddAdminOpen] = useState(false);
+  const [isEditPermissionOpen, setIsEditPermissionOpen] = useState(false);
   const [editData, setEditData] = useState({
     email: user?.email || "",
     mobile: user?.mobile || "",
@@ -35,6 +45,38 @@ export default function AdminProfile() {
     mobile: "",
     permissions: "read_only" as "read_only" | "read_write"
   });
+  const [admins, setAdmins] = useState<Admin[]>([]);
+  const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
+  const [editPermission, setEditPermission] = useState<"read_only" | "read_write">("read_only");
+
+  useEffect(() => {
+    // Load admins from localStorage or use defaults
+    const stored = localStorage.getItem("hrms_admins");
+    if (stored) {
+      setAdmins(JSON.parse(stored));
+    } else {
+      const defaultAdmins: Admin[] = [
+        {
+          id: "EMP001",
+          name: "Admin User",
+          email: "admin@company.com",
+          mobile: "9876543210",
+          permissions: "read_write",
+          joiningDate: "2023-01-01"
+        },
+        {
+          id: "EMP004",
+          name: "Sarah Manager",
+          email: "sarah@company.com",
+          mobile: "9876543213",
+          permissions: "read_only",
+          joiningDate: "2023-03-15"
+        }
+      ];
+      setAdmins(defaultAdmins);
+      localStorage.setItem("hrms_admins", JSON.stringify(defaultAdmins));
+    }
+  }, []);
 
   if (!user) return null;
 
@@ -47,11 +89,75 @@ export default function AdminProfile() {
   };
 
   const handleAddAdmin = () => {
+    if (!newAdmin.name || !newAdmin.email || !newAdmin.mobile) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Please fill in all fields.",
+      });
+      return;
+    }
+
+    const newAdminData: Admin = {
+      id: `EMP${String(Date.now()).slice(-3)}`,
+      ...newAdmin,
+      joiningDate: new Date().toISOString().split('T')[0]
+    };
+
+    const updatedAdmins = [...admins, newAdminData];
+    setAdmins(updatedAdmins);
+    localStorage.setItem("hrms_admins", JSON.stringify(updatedAdmins));
+
     toast({
       title: "Admin Added",
       description: `${newAdmin.name} has been added as an admin with ${newAdmin.permissions === 'read_write' ? 'Read & Write' : 'Read-Only'} permissions.`,
     });
     setIsAddAdminOpen(false);
+    setNewAdmin({
+      name: "",
+      email: "",
+      mobile: "",
+      permissions: "read_only"
+    });
+  };
+
+  const handleEditPermission = () => {
+    if (!selectedAdmin) return;
+
+    const updatedAdmins = admins.map(admin =>
+      admin.id === selectedAdmin.id
+        ? { ...admin, permissions: editPermission }
+        : admin
+    );
+    setAdmins(updatedAdmins);
+    localStorage.setItem("hrms_admins", JSON.stringify(updatedAdmins));
+
+    toast({
+      title: "Permissions Updated",
+      description: `${selectedAdmin.name}'s permissions have been changed to ${editPermission === 'read_write' ? 'Read & Write' : 'Read-Only'}.`,
+    });
+    setIsEditPermissionOpen(false);
+    setSelectedAdmin(null);
+  };
+
+  const handleRemoveAdmin = (admin: Admin) => {
+    if (admin.id === "EMP001") {
+      toast({
+        variant: "destructive",
+        title: "Cannot Remove",
+        description: "You cannot remove the primary admin account.",
+      });
+      return;
+    }
+
+    const updatedAdmins = admins.filter(a => a.id !== admin.id);
+    setAdmins(updatedAdmins);
+    localStorage.setItem("hrms_admins", JSON.stringify(updatedAdmins));
+
+    toast({
+      title: "Admin Removed",
+      description: `${admin.name} has been removed from the system.`,
+    });
   };
 
   return (
@@ -196,7 +302,7 @@ export default function AdminProfile() {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-2xl font-bold">System Administrators</h3>
+                <h3 className="text-2xl font-bold">System Administrators ({admins.length})</h3>
                 <p className="text-muted-foreground">Manage admin accounts and permissions</p>
               </div>
               <Button onClick={() => setIsAddAdminOpen(true)}>
@@ -206,48 +312,57 @@ export default function AdminProfile() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              {/* Admin User Card */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle>Admin User</CardTitle>
-                      <CardDescription>admin@company.com • 9876543210</CardDescription>
+              {admins.map((admin) => (
+                <Card key={admin.id}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle>{admin.name}</CardTitle>
+                        <CardDescription>{admin.email} • {admin.mobile}</CardDescription>
+                      </div>
+                      <span className={`px-3 py-1 text-xs font-semibold rounded ${
+                        admin.permissions === 'read_write' 
+                          ? 'bg-red-100 text-red-700' 
+                          : 'bg-blue-100 text-blue-700'
+                      }`}>
+                        {admin.permissions === 'read_write' ? 'Read & Write' : 'Read Only'}
+                      </span>
                     </div>
-                    <span className="px-3 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded">Read & Write</span>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Employee ID: EMP001</p>
-                    <p className="text-sm text-muted-foreground">Joined: 2023-01-01</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Super Admin with full system access</p>
-                </CardContent>
-              </Card>
-
-              {/* Sarah Manager Card */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle>Sarah Manager</CardTitle>
-                      <CardDescription>sarah@company.com • 9876543213</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">Employee ID: {admin.id}</p>
+                      <p className="text-sm text-muted-foreground">Joined: {admin.joiningDate}</p>
                     </div>
-                    <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded">Read Only</span>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Employee ID: EMP004</p>
-                    <p className="text-sm text-muted-foreground">Joined: 2023-03-15</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm">Edit Permissions</Button>
-                    <Button variant="outline" size="sm">Remove</Button>
-                  </div>
-                </CardContent>
-              </Card>
+                    {admin.id === "EMP001" && (
+                      <p className="text-xs text-muted-foreground">Super Admin with full system access</p>
+                    )}
+                    {admin.id !== "EMP001" && (
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            setSelectedAdmin(admin);
+                            setEditPermission(admin.permissions);
+                            setIsEditPermissionOpen(true);
+                          }}
+                        >
+                          Edit Permissions
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => handleRemoveAdmin(admin)}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
             </div>
 
             {/* Permission Levels Info */}
@@ -321,6 +436,36 @@ export default function AdminProfile() {
           </div>
           <DialogFooter>
             <Button onClick={handleAddAdmin}>Create Admin Account</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Permission Dialog */}
+      <Dialog open={isEditPermissionOpen} onOpenChange={setIsEditPermissionOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Admin Permissions</DialogTitle>
+            <DialogDescription>Change permissions for {selectedAdmin?.name}</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>Permissions</Label>
+              <Select 
+                value={editPermission}
+                onValueChange={(val: any) => setEditPermission(val)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="read_write">Read & Write (Full Access)</SelectItem>
+                  <SelectItem value="read_only">Read Only (View Only)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleEditPermission}>Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

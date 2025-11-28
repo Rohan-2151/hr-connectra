@@ -161,7 +161,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <main className="flex-1 overflow-y-auto p-4 md:p-8 relative z-0">
           <div className="mx-auto max-w-6xl animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Desktop Notification Button */}
-            {user?.role === 'admin' && (
+            {(user?.role === 'admin' || user?.role === 'employee') && (
               <div className="absolute top-8 right-8 md:flex hidden">
                 <Button 
                   variant="outline" 
