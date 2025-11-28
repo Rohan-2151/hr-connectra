@@ -7,6 +7,8 @@ import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login";
 import AdminDashboard from "@/pages/admin-dashboard";
+import AdminEmployeesPage from "@/pages/admin-employees";
+import AdminAttendancePage from "@/pages/admin-attendance";
 import EmployeeDashboard from "@/pages/employee-dashboard";
 import EmployeeProfile from "@/pages/employee-profile";
 
@@ -34,10 +36,13 @@ function Router() {
         <ProtectedRoute component={AdminDashboard} role="admin" />
       </Route>
       <Route path="/admin/employees">
-        <ProtectedRoute component={AdminDashboard} role="admin" />
+        <ProtectedRoute component={AdminEmployeesPage} role="admin" />
       </Route>
       <Route path="/admin/attendance">
-        <ProtectedRoute component={AdminDashboard} role="admin" />
+        <ProtectedRoute component={AdminAttendancePage} role="admin" />
+      </Route>
+      <Route path="/admin/profile">
+        <ProtectedRoute component={EmployeeProfile} role="admin" />
       </Route>
 
       {/* Employee Routes */}

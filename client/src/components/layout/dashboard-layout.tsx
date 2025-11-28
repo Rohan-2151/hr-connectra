@@ -30,6 +30,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         { href: "/admin", label: "Overview", icon: LayoutDashboard },
         { href: "/admin/employees", label: "Employees", icon: Users },
         { href: "/admin/attendance", label: "Attendance", icon: Building2 },
+        { href: "/admin/profile", label: "My Profile", icon: UserCircle },
       ]
     : [
         { href: "/employee", label: "Dashboard", icon: LayoutDashboard },
@@ -52,7 +53,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className="flex-1 px-4">
         <nav className="grid gap-2">
           {navItems.map((item) => {
-            const isActive = location === item.href;
+            // Check if active. For admin employees, we might have query params, so we check startsWith for exact path match
+            const isActive = location === item.href || (item.href !== '/admin' && location.startsWith(item.href));
+            
             return (
               <Link key={item.href} href={item.href}>
                 <div 

@@ -5,8 +5,14 @@ import { AttendanceChart } from "@/components/dashboard/attendance-chart";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, Plus } from "lucide-react";
+import { useLocation } from "wouter";
+import { AddEmployeeDialog } from "@/components/dialogs/add-employee-dialog";
+import { useState } from "react";
 
 export default function AdminDashboard() {
+  const [_, setLocation] = useLocation();
+  const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false);
+
   return (
     <DashboardLayout>
       <div className="flex items-center justify-between space-y-2 mb-8">
@@ -17,16 +23,21 @@ export default function AdminDashboard() {
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => alert("Downloading report...")}>
             <Download className="mr-2 h-4 w-4" />
             Download Report
           </Button>
-          <Button>
+          <Button onClick={() => setIsAddEmployeeOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Add Employee
           </Button>
         </div>
       </div>
+
+      <AddEmployeeDialog 
+        open={isAddEmployeeOpen} 
+        onOpenChange={setIsAddEmployeeOpen} 
+      />
 
       <div className="space-y-8">
         <StatsCards />
@@ -73,7 +84,10 @@ export default function AdminDashboard() {
         </div>
 
         <div className="space-y-4">
-          <h3 className="text-xl font-semibold tracking-tight">Employee Directory</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-semibold tracking-tight">Employee Directory</h3>
+            <Button variant="link" onClick={() => setLocation("/admin/employees")}>View All</Button>
+          </div>
           <EmployeeTable />
         </div>
       </div>
