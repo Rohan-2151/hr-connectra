@@ -59,7 +59,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               HR
             </div>
-            <span>Nexus</span>
+            <span>Connectra</span>
           </div>
         </Link>
       </div>
@@ -128,7 +128,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               HR
             </div>
-            <span>Nexus</span>
+            <span>Connectra</span>
           </div>
           
           <div className="flex items-center gap-2">
