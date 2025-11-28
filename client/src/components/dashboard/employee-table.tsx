@@ -9,19 +9,36 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react";
+import { MoreHorizontal, Eye, Edit, Trash2, KeyRound } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { MOCK_EMPLOYEES } from "@/lib/mock-data";
+import { MOCK_EMPLOYEES, Employee } from "@/lib/mock-data";
+import { ChangePasswordDialog } from "@/components/dialogs/change-password-dialog";
+import { useState } from "react";
 
 export function EmployeeTable() {
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+
+  const handlePasswordChange = (employee: Employee) => {
+    setSelectedEmployee(employee);
+    setIsPasswordDialogOpen(true);
+  };
+
   return (
     <div className="rounded-md border">
+      <ChangePasswordDialog 
+        open={isPasswordDialogOpen} 
+        onOpenChange={setIsPasswordDialogOpen}
+        employeeName={selectedEmployee?.name}
+      />
+
       <Table>
         <TableHeader>
           <TableRow>
@@ -80,6 +97,10 @@ export function EmployeeTable() {
                     <DropdownMenuItem>
                       <Edit className="mr-2 h-4 w-4" /> Edit Employee
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handlePasswordChange(employee)}>
+                      <KeyRound className="mr-2 h-4 w-4" /> Reset Password
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem className="text-destructive">
                       <Trash2 className="mr-2 h-4 w-4" /> Deactivate
                     </DropdownMenuItem>

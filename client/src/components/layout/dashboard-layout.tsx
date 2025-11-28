@@ -100,14 +100,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen bg-background md:grid md:grid-cols-[240px_1fr]">
-      {/* Desktop Sidebar */}
-      <aside className="hidden border-r bg-sidebar md:block">
+      {/* Desktop Sidebar - Added sticky top to ensure it stays visible and doesn't overflow strangely */}
+      <aside className="hidden border-r bg-sidebar md:block sticky top-0 h-screen overflow-y-auto z-30">
         <SidebarContent />
       </aside>
 
       {/* Mobile Header */}
-      <div className="flex flex-col">
-        <header className="flex h-16 items-center justify-between border-b bg-background px-4 md:hidden">
+      <div className="flex flex-col min-h-screen">
+        <header className="flex h-16 items-center justify-between border-b bg-background px-4 md:hidden sticky top-0 z-40">
           <div className="flex items-center gap-2 font-heading text-lg font-bold text-primary">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               HR
@@ -127,8 +127,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </Sheet>
         </header>
 
-        {/* Main Content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8">
+        {/* Main Content - Added relative z-0 to ensure it doesn't overlap sidebar */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 relative z-0">
           <div className="mx-auto max-w-6xl animate-in fade-in slide-in-from-bottom-4 duration-500">
             {children}
           </div>

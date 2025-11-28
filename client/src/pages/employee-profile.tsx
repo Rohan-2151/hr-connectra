@@ -5,6 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { ChangePasswordDialog } from "@/components/dialogs/change-password-dialog";
+import { KeyRound } from "lucide-react";
 
 export default function EmployeeProfile() {
   const { user } = useAuth();
@@ -106,7 +108,13 @@ export default function EmployeeProfile() {
             </div>
 
             <div className="flex justify-end">
-              <Button disabled>Edit Profile (Admin Only)</Button>
+              <ChangePasswordDialog 
+                trigger={
+                  <Button variant="outline">
+                    <KeyRound className="mr-2 h-4 w-4" /> Change Password
+                  </Button>
+                } 
+              />
             </div>
           </CardContent>
         </Card>
