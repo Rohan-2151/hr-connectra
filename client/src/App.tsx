@@ -11,6 +11,7 @@ import AdminEmployeesPage from "@/pages/admin-employees";
 import AdminAttendancePage from "@/pages/admin-attendance";
 import AdminRulesPage from "@/pages/admin-rules";
 import AdminSalaryPage from "@/pages/admin-salary";
+import AdminAdvancesPage from "@/pages/admin-advances"; // New Page
 import EmployeeDashboard from "@/pages/employee-dashboard";
 import EmployeeProfile from "@/pages/employee-profile";
 
@@ -43,11 +44,14 @@ function Router() {
       <Route path="/admin/attendance">
         <ProtectedRoute component={AdminAttendancePage} role="admin" />
       </Route>
-      <Route path="/admin/rules">
-        <ProtectedRoute component={AdminRulesPage} role="admin" />
-      </Route>
       <Route path="/admin/salary">
         <ProtectedRoute component={AdminSalaryPage} role="admin" />
+      </Route>
+      <Route path="/admin/advances">
+        <ProtectedRoute component={AdminAdvancesPage} role="admin" />
+      </Route>
+      <Route path="/admin/rules">
+        <ProtectedRoute component={AdminRulesPage} role="admin" />
       </Route>
       <Route path="/admin/profile">
         <ProtectedRoute component={EmployeeProfile} role="admin" />

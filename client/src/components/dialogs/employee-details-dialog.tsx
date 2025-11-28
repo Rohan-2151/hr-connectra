@@ -4,17 +4,27 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Employee } from "@/lib/mock-data";
+import { Employee, MOCK_ADVANCES, MOCK_PAYROLL } from "@/lib/mock-data";
 import { useState } from "react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, getDay, isToday } from "date-fns";
-import { ChevronLeft, ChevronRight, Download, DollarSign, Calendar as CalendarIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, DollarSign, Calendar as CalendarIcon, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAuth } from "@/hooks/use-auth";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface EmployeeDetailsDialogProps {
   employee: Employee | null;
@@ -22,7 +32,8 @@ interface EmployeeDetailsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-// Mock data generator for daily attendance
+// Mock data generator for daily attendance (simulating API fetch)
+// In real app, this would come from props or API based on month
 const generateDailyAttendance = (month: Date) => {
   const days = eachDayOfInterval({
     start: startOfMonth(month),
@@ -36,26 +47,44 @@ const generateDailyAttendance = (month: Date) => {
     // Randomly assign status
     let status: "present" | "absent" | "holiday" | "week-off" = isWeekend ? "week-off" : "present";
     let otHours = 0;
+    let isEdited = false;
     
     if (!isWeekend && Math.random() > 0.8) status = "absent";
     if (status === "present" && Math.random() > 0.7) otHours = Math.floor(Math.random() * 4) + 1;
+    
+    // Simulate random edit
+    if (Math.random() > 0.95) isEdited = true;
 
     return {
       date: day,
       status,
       otHours,
       checkIn: status === "present" ? "09:00 AM" : "-",
-      checkOut: status === "present" ? (otHours > 0 ? `${18 + Math.floor(otHours)}:00` : "18:00") : "-"
+      checkOut: status === "present" ? (otHours > 0 ? `${18 + Math.floor(otHours)}:00` : "18:00") : "-",
+      isEdited
     };
   });
 };
 
 export function EmployeeDetailsDialog({ employee, open, onOpenChange }: EmployeeDetailsDialogProps) {
+  const { user } = useAuth(); // To check if admin
+  const { toast } = useToast();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [selectedMonthStr, setSelectedMonthStr] = useState(new Date().getMonth().toString());
+  
+  // State for editing attendance (Admin only)
+  const [editDay, setEditDay] = useState<any | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editForm, setEditForm] = useState({ status: "", otHours: 0 });
 
   if (!employee) return null;
+
+  const isAdmin = user?.role === 'admin';
+  
+  // Mock Advances
+  const advances = MOCK_ADVANCES.filter(adv => adv.employeeId === employee.id);
+  const totalAdvances = advances.reduce((sum, adv) => sum + adv.amount, 0);
 
   const days = generateDailyAttendance(new Date(parseInt(selectedYear), parseInt(selectedMonthStr)));
 
@@ -69,6 +98,22 @@ export function EmployeeDetailsDialog({ employee, open, onOpenChange }: Employee
     setCurrentMonth(new Date(parseInt(val), parseInt(selectedMonthStr)));
   };
 
+  const handleDayClick = (day: any) => {
+    if (!isAdmin) return;
+    setEditDay(day);
+    setEditForm({ status: day.status, otHours: day.otHours });
+    setIsEditDialogOpen(true);
+  };
+
+  const saveAttendanceEdit = () => {
+    // In real app: API call to update attendance
+    toast({
+      title: "Attendance Updated",
+      description: `Record for ${format(editDay.date, 'PPP')} has been edited.`,
+    });
+    setIsEditDialogOpen(false);
+  };
+
   // Salary Calculations (Mock)
   const presentDays = days.filter(d => d.status === "present").length;
   const totalOtHours = days.reduce((acc, curr) => acc + curr.otHours, 0);
@@ -80,17 +125,16 @@ export function EmployeeDetailsDialog({ employee, open, onOpenChange }: Employee
   const otEarnings = Math.round(totalOtHours * otRate);
   const reimbursements = 2500; // Fixed mock
   
-  const deductions = {
-    advance: 0,
-    pt: 200,
-    other: 0
-  };
-  
-  // Random deduction based on absent days (simple logic)
+  // Deductions
   const absentDays = days.filter(d => d.status === "absent").length;
   const lopDeduction = Math.round(absentDays * dailyRate);
-  const totalDeductions = deductions.advance + deductions.pt + deductions.other + lopDeduction;
+  const ptDeduction = 200;
   
+  // Use actual advances from mock data for "Salary Advance" deduction
+  // Assuming all advances this month are deducted this month for simplicity
+  const advanceDeduction = totalAdvances; 
+  
+  const totalDeductions = ptDeduction + advanceDeduction + lopDeduction;
   const netSalary = basicSalary + otEarnings + reimbursements - totalDeductions;
 
   return (
@@ -104,9 +148,10 @@ export function EmployeeDetailsDialog({ employee, open, onOpenChange }: Employee
         </DialogHeader>
 
         <Tabs defaultValue="attendance" className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="grid w-full grid-cols-2 mb-4">
-            <TabsTrigger value="attendance">Attendance Calendar</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 mb-4">
+            <TabsTrigger value="attendance">Attendance</TabsTrigger>
             <TabsTrigger value="salary">Salary Breakdown</TabsTrigger>
+            <TabsTrigger value="advances">Advance History</TabsTrigger>
           </TabsList>
 
           <TabsContent value="attendance" className="flex-1 overflow-y-auto pr-2">
@@ -162,7 +207,6 @@ export function EmployeeDetailsDialog({ employee, open, onOpenChange }: Employee
               </div>
               
               <div className="grid grid-cols-7 gap-2">
-                {/* Padding for start of month */}
                 {Array.from({ length: getDay(startOfMonth(currentMonth)) }).map((_, i) => (
                   <div key={`pad-${i}`} className="h-24 border rounded-md bg-muted/20"></div>
                 ))}
@@ -170,7 +214,10 @@ export function EmployeeDetailsDialog({ employee, open, onOpenChange }: Employee
                 {days.map((day, i) => (
                   <div 
                     key={i} 
-                    className={`h-24 border rounded-md p-1 flex flex-col justify-between relative ${
+                    onClick={() => handleDayClick(day)}
+                    className={`h-24 border rounded-md p-1 flex flex-col justify-between relative group transition-colors ${
+                      isAdmin ? "cursor-pointer hover:border-primary/50" : ""
+                    } ${
                       isToday(day.date) ? "ring-2 ring-primary" : ""
                     } ${
                       day.status === 'absent' ? 'bg-red-50 dark:bg-red-950/20 border-red-200' : 
@@ -186,8 +233,14 @@ export function EmployeeDetailsDialog({ employee, open, onOpenChange }: Employee
                       </span>
                       {day.otHours > 0 && (
                         <Badge variant="secondary" className="h-4 px-1 text-[10px] bg-blue-100 text-blue-700 hover:bg-blue-100">
-                          +{day.otHours}h OT
+                          +{day.otHours}h
                         </Badge>
+                      )}
+                      {day.isEdited && (
+                        <span className="absolute top-1 right-1 flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                        </span>
                       )}
                     </div>
                     
@@ -203,6 +256,12 @@ export function EmployeeDetailsDialog({ employee, open, onOpenChange }: Employee
                         <div className="text-muted-foreground text-center mt-2">WO</div>
                       )}
                     </div>
+                    
+                    {isAdmin && (
+                      <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-md">
+                        <Edit2 className="h-4 w-4 text-primary" />
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -260,11 +319,11 @@ export function EmployeeDetailsDialog({ employee, open, onOpenChange }: Employee
                    <div className="space-y-3 rounded-lg border p-4 bg-red-50/10">
                       <div className="flex justify-between items-center">
                         <span className="text-sm">Professional Tax (PT)</span>
-                        <span className="font-medium text-red-600">- ₹{deductions.pt.toLocaleString()}</span>
+                        <span className="font-medium text-red-600">- ₹{ptDeduction.toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm">Salary Advance</span>
-                        <span className="font-medium text-red-600">- ₹{deductions.advance.toLocaleString()}</span>
+                        <span className="text-sm">Salary Advance (Deducted)</span>
+                        <span className="font-medium text-red-600">- ₹{advanceDeduction.toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between items-center">
                          <div className="flex flex-col">
@@ -282,7 +341,90 @@ export function EmployeeDetailsDialog({ employee, open, onOpenChange }: Employee
                </div>
              </div>
           </TabsContent>
+
+          <TabsContent value="advances" className="flex-1 overflow-y-auto">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="font-semibold">Advance History</h3>
+                <div className="text-sm">
+                  Total Taken: <span className="font-bold text-red-600">₹{totalAdvances.toLocaleString()}</span>
+                </div>
+              </div>
+              <Card>
+                <CardContent className="p-0">
+                  <div className="divide-y">
+                    {advances.length > 0 ? (
+                      advances.map((adv) => (
+                        <div key={adv.id} className="flex items-center justify-between p-4">
+                          <div>
+                            <p className="font-medium">{format(new Date(adv.date), 'PPP')}</p>
+                            <p className="text-sm text-muted-foreground">{adv.remark}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-red-600">₹{adv.amount.toLocaleString()}</p>
+                            <Badge variant="outline" className="text-[10px] capitalize">{adv.type.replace('_', ' ')}</Badge>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-8 text-center text-muted-foreground">
+                        No advances found for this employee.
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
         </Tabs>
+
+        {/* Edit Attendance Dialog (Nested) */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-[400px]">
+            <DialogHeader>
+              <DialogTitle>Edit Attendance</DialogTitle>
+              <DialogDescription>
+                Editing record for {editDay && format(editDay.date, 'PPP')}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select 
+                  value={editForm.status} 
+                  onValueChange={(val) => setEditForm({...editForm, status: val})}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="present">Present</SelectItem>
+                    <SelectItem value="absent">Absent</SelectItem>
+                    <SelectItem value="half-day">Half Day</SelectItem>
+                    <SelectItem value="week-off">Week Off</SelectItem>
+                    <SelectItem value="holiday">Holiday</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Overtime Hours</Label>
+                <Input 
+                  type="number" 
+                  value={editForm.otHours}
+                  onChange={(e) => setEditForm({...editForm, otHours: Number(e.target.value)})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Admin Remark</Label>
+                <Input placeholder="Reason for change..." />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={saveAttendanceEdit}>Update Record</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
       </DialogContent>
     </Dialog>
   );

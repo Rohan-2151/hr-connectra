@@ -16,10 +16,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { useEffect } from "react";
-import { ShieldCheck, User } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
+
+// Updated regex to allow email OR mobile number (simple 10 digit check for mobile)
+const loginIdentifierSchema = z.string().refine((val) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const mobileRegex = /^\d{10}$/;
+  return emailRegex.test(val) || mobileRegex.test(val);
+}, "Must be a valid email or 10-digit mobile number");
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  identifier: loginIdentifierSchema,
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
@@ -38,13 +45,15 @@ export default function LoginPage() {
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
+      identifier: "",
       password: "",
     },
   });
 
   function onSubmit(values: z.infer<typeof loginSchema>, role: "admin" | "employee") {
-    login(values.email, role);
+    // Pass identifier as email for mock auth (mock auth checks email field)
+    // In real app, backend would handle lookup by email OR mobile
+    login(values.identifier, role);
   }
 
   return (
@@ -77,12 +86,12 @@ export default function LoginPage() {
                   <form onSubmit={form.handleSubmit((v) => onSubmit(v, "employee"))} className="space-y-4">
                     <FormField
                       control={form.control}
-                      name="email"
+                      name="identifier"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email</FormLabel>
+                          <FormLabel>Email or Mobile Number</FormLabel>
                           <FormControl>
-                            <Input placeholder="john@company.com" {...field} />
+                            <Input placeholder="john@company.com or 9876543210" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -118,8 +127,8 @@ export default function LoginPage() {
               <CardFooter className="flex flex-col space-y-2 text-center text-sm text-muted-foreground">
                  <div className="bg-muted/50 p-3 rounded-md w-full text-xs">
                     <p>Demo Credentials:</p>
-                    <p>Email: <span className="font-mono text-foreground">john@company.com</span></p>
-                    <p>Password: <span className="font-mono text-foreground">any (6+ chars)</span></p>
+                    <p>User: <span className="font-mono text-foreground">john@company.com</span></p>
+                    <p>Pass: <span className="font-mono text-foreground">any (6+ chars)</span></p>
                  </div>
               </CardFooter>
             </Card>
@@ -138,10 +147,10 @@ export default function LoginPage() {
                   <form onSubmit={form.handleSubmit((v) => onSubmit(v, "admin"))} className="space-y-4">
                     <FormField
                       control={form.control}
-                      name="email"
+                      name="identifier"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email</FormLabel>
+                          <FormLabel>Email or Mobile Number</FormLabel>
                           <FormControl>
                             <Input placeholder="admin@company.com" {...field} />
                           </FormControl>
@@ -171,8 +180,8 @@ export default function LoginPage() {
               <CardFooter className="flex flex-col space-y-2 text-center text-sm text-muted-foreground">
                  <div className="bg-muted/50 p-3 rounded-md w-full text-xs">
                     <p>Demo Credentials:</p>
-                    <p>Email: <span className="font-mono text-foreground">admin@company.com</span></p>
-                    <p>Password: <span className="font-mono text-foreground">any (6+ chars)</span></p>
+                    <p>User: <span className="font-mono text-foreground">admin@company.com</span></p>
+                    <p>Pass: <span className="font-mono text-foreground">any (6+ chars)</span></p>
                  </div>
               </CardFooter>
             </Card>

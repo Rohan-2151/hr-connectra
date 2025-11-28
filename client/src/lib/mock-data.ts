@@ -26,6 +26,18 @@ export interface AttendanceRecord {
   totalHours: number;
   status: "present" | "absent" | "half-day" | "week-off" | "holiday";
   location: { lat: number; lng: number };
+  isEdited?: boolean;
+  adminRemark?: string;
+  otHours?: number; // Added for explicit OT tracking
+}
+
+export interface AdvanceRecord {
+  id: string;
+  employeeId: string;
+  date: string;
+  amount: number;
+  remark: string;
+  type: "salary_advance" | "loan" | "other";
 }
 
 export interface PayrollRecord {
@@ -48,9 +60,16 @@ export interface CompanyRules {
   shiftEnd: string;
   fullDayHours: number;
   halfDayHours: number;
-  otStartAfter: number; // Hours after which OT counts
-  otRateMultiplier: number; // e.g., 1.5x of hourly rate
+  otStartAfter: number;
+  otRateMultiplier: number;
   lateGracePeriodMinutes: number;
+  // New Fields
+  weekOffs: number[]; // 0=Sun, 1=Mon, etc.
+  isWeekOffPaid: boolean;
+  isHolidayPaid: boolean;
+  officeLat: number;
+  officeLng: number;
+  geofenceRadius: number; // meters
 }
 
 export const DEFAULT_RULES: CompanyRules = {
@@ -60,7 +79,13 @@ export const DEFAULT_RULES: CompanyRules = {
   halfDayHours: 4.5,
   otStartAfter: 9,
   otRateMultiplier: 1.5,
-  lateGracePeriodMinutes: 15
+  lateGracePeriodMinutes: 15,
+  weekOffs: [0, 6], // Sat, Sun
+  isWeekOffPaid: true,
+  isHolidayPaid: true,
+  officeLat: 37.7749,
+  officeLng: -122.4194,
+  geofenceRadius: 100
 };
 
 export const MOCK_EMPLOYEES: Employee[] = [
@@ -120,10 +145,11 @@ export const MOCK_EMPLOYEES: Employee[] = [
   }
 ];
 
+// We can use DEFAULT_RULES.officeLat/Lng instead of standalone
 export const OFFICE_LOCATION = {
-  lat: 37.7749, // Example: San Francisco
-  lng: -122.4194,
-  radius: 100 // meters
+  lat: DEFAULT_RULES.officeLat,
+  lng: DEFAULT_RULES.officeLng,
+  radius: DEFAULT_RULES.geofenceRadius
 };
 
 export const MOCK_PAYROLL: PayrollRecord[] = [
@@ -166,7 +192,8 @@ export const MOCK_ATTENDANCE: AttendanceRecord[] = [
     punchOut: null,
     totalHours: 0,
     status: "present",
-    location: { lat: 37.7749, lng: -122.4194 }
+    location: { lat: 37.7749, lng: -122.4194 },
+    isEdited: false
   },
   {
     id: "ATT002",
@@ -176,6 +203,19 @@ export const MOCK_ATTENDANCE: AttendanceRecord[] = [
     punchOut: null,
     totalHours: 0,
     status: "present",
-    location: { lat: 37.7749, lng: -122.4194 }
+    location: { lat: 37.7749, lng: -122.4194 },
+    isEdited: true,
+    adminRemark: "System error correction"
+  }
+];
+
+export const MOCK_ADVANCES: AdvanceRecord[] = [
+  {
+    id: "ADV001",
+    employeeId: "EMP002",
+    date: "2025-11-05",
+    amount: 5000,
+    remark: "Medical Emergency",
+    type: "salary_advance"
   }
 ];

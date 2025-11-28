@@ -10,7 +10,8 @@ import {
   UserCircle,
   Building2,
   Settings,
-  Banknote
+  Banknote,
+  Wallet
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         { href: "/admin/employees", label: "Employees", icon: Users },
         { href: "/admin/attendance", label: "Attendance", icon: Building2 },
         { href: "/admin/salary", label: "Payroll & Salary", icon: Banknote },
+        { href: "/admin/advances", label: "Advances", icon: Wallet },
         { href: "/admin/rules", label: "Rules & Policies", icon: Settings },
         { href: "/admin/profile", label: "My Profile", icon: UserCircle },
       ]
