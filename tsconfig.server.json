@@ -1,13 +1,24 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "CommonJS",
+    "module": "ES2020",
     "rootDir": "server",
     "outDir": "dist",
     "esModuleInterop": true,
     "strict": false,
     "skipLibCheck": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["shared/*"]
+    }
   },
-  "include": ["server/**/*"]
+  "include": ["server/**/*"],
+  "exclude": [
+    "client",
+    "dist",
+    "node_modules",
+    "vite.config.ts",
+    "vite-plugin-meta-images.ts"
+  ]
 }
